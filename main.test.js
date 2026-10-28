@@ -82,3 +82,15 @@ test('the server repeated-check-in message counts as already checked in', async 
   const result = await request('/api/user/checkin', 'example', {}, async () => json({ code: 1, message: 'Checkin Repeats! Please Try Tomorrow' }))
   assert.equal(result.alreadyCheckedIn, true)
 })
+
+
+test('current GLaDOS already-recorded message is recognized', async () => {
+  const result = await request('/api/user/checkin', 'example', {}, async () => json({ code: 1, message: "Today's observation logged. Return tomorrow for more points." }))
+  assert.equal(result.alreadyCheckedIn, true)
+})
+
+test('unexpected code-one messages redact cookie values and account identifiers', async () => {
+  const result = await glados({ GLADOS: 'session=secret-cookie-value' }, async () => json({ code: 1, message: 'Rejected secret-cookie-value person@example.com 123456' }))
+  assert.equal(result.failed, true)
+  assert.doesNotMatch(result.notice.join(' '), /secret-cookie-value|person@example.com|123456/)
+})
