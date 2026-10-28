@@ -76,3 +76,9 @@ test('configured login user agent is sent to check-in and status', async () => {
   assert.equal(result.failed, false)
   assert.deepEqual(calls, [userAgent, userAgent])
 })
+
+
+test('the server repeated-check-in message counts as already checked in', async () => {
+  const result = await request('/api/user/checkin', 'example', {}, async () => json({ code: 1, message: 'Checkin Repeats! Please Try Tomorrow' }))
+  assert.equal(result.alreadyCheckedIn, true)
+})

@@ -37,7 +37,7 @@ export const request = async (path, cookie, options = {}, fetchImpl = fetch) => 
     } catch {
       throw new Error(`${path}: 服务返回非 JSON 内容，可能是登录页或访问验证`)
     }
-    if (path === '/api/user/checkin' && data?.code === 1 && data?.message === 'Please Try Tomorrow') {
+    if (path === '/api/user/checkin' && data?.code === 1 && typeof data?.message === 'string' && /^(?:Checkin Repeats!\s*)?Please Try Tomorrow[.!]?$/i.test(data.message.trim())) {
       return { ...data, alreadyCheckedIn: true }
     }
     if (data?.code !== 0) {
