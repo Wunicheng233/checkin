@@ -47,8 +47,18 @@ export const request = async (path, cookie, options = {}, fetchImpl = fetch) => 
         throw new Error(`${path}: 登录设备不匹配，请将 glados.config.json 的 userAgent 配置为获取 Cookie 时浏览器的完整 User-Agent`)
       }
       const message = String(data?.message ?? '')
+      let hint = ''
+      if (code === 1 && typeof data?.message === 'string') {
+        let safe = data.message
+        for (const part of cookie.split(';')) {
+          const value = part.slice(part.indexOf('=') + 1).trim()
+          if (value.length >= 4) safe = safe.split(value).join('[redacted]')
+        }
+        safe = safe.replace(/https?:\/\/\S+|[\w.+-]+@[\w.-]+|[A-Za-z0-9_=-]{24,}|\d+/g, '[redacted]').replace(/[\r\n<>]/g, ' ').slice(0, 200)
+        hint = `，服务提示：${safe}`
+      }
       const auth = code === -2 || /cookie|login|log in|登录|登陆|认证|身份|expired|未授权|没有权限/i.test(message)
-      throw new Error(`${path}: API code=${code}${auth ? '，登录凭证失效，请更新 GLADOS Secret 中的 Cookie' : '，签到未被服务确认'}`)
+      throw new Error(`${path}: API code=${code}${auth ? '，登录凭证失效，请更新 GLADOS Secret 中的 Cookie' : '，签到未被服务确认'}${hint}`)
     }
     return data
   }
