@@ -64,3 +64,15 @@ test('only the explicit already-checked-in response is accepted', async () => {
 test('device mismatch gives a specific recovery instruction', async () => {
   await assert.rejects(request('/api/user/checkin', 'example', {}, async () => json({ code: 4, reason: 'device-mismatch' })), /登录设备不匹配/)
 })
+
+
+test('configured login user agent is sent to check-in and status', async () => {
+  const calls = []
+  const userAgent = 'Mozilla/5.0 (test login browser)'
+  const result = await glados({ GLADOS: 'example', GLADOS_USER_AGENT: userAgent }, async (url, options) => {
+    calls.push(options.headers['user-agent'])
+    return json({ code: 0, data: { leftDays: 10 } })
+  })
+  assert.equal(result.failed, false)
+  assert.deepEqual(calls, [userAgent, userAgent])
+})
