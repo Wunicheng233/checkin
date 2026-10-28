@@ -45,7 +45,7 @@ Actions 的 `npm run main` 步骤和运行摘要会显示每个帐号的签到�
 
 - `API code=-2` / 登录凭证失效：重新登录 GLaDOS，在浏览器开发者工具的 Network 中找到 `/api/user/checkin` 或 `/api/user/status` 请求，复制 Request Headers 中完整的 `Cookie` 值，然后到仓库 Settings → Secrets and variables → Actions 更新 `GLADOS`。只复制值，不要带 `Cookie:` 前缀。请勿将 Cookie 写入代码、Issue 或公开日志。
 - 更新后，在 Actions → run → Run workflow 选择 `main` 手动验证。看到 `Checkin OK` 或明确的“今日已签到”才表示成功。
-- 登录设备不匹配：重新登录并更新 Cookie；如果仍然失败，需检查网站要求的登录设备信息。
+- 登录设备不匹配：在获取 Cookie 的同一个请求中复制完整 `User-Agent`，将其填写到 `glados.config.json` 的 `userAgent` 字段（这是浏览器标识，不是 Cookie，Cookie 仍只放在 Secret 中）。它必须与登录浏览器一致；更新浏览器或重新登录后，如果再报设备不匹配，需要同步更新 Cookie 和此字段。多个帐号应使用相同浏览器标识登录。
 - HTTP 403 / 非 JSON：可能遇到站点访问验证；网络错误、HTTP 429 和 5xx 会自动重试，最多三次，每次请求最多等待 30 秒。
 
 Cookie 有有效期，脚本无法在没有重新登录的情况下自动生成新 Cookie。签到结果以签到接口为准，查询剩余天数失败会单独显示提示。
