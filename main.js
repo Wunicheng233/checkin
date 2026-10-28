@@ -36,11 +36,17 @@ export const request = async (path, cookie, options = {}, fetchImpl = fetch) => 
     } catch {
       throw new Error(`${path}: 服务返回非 JSON 内容，可能是登录页或访问验证`)
     }
+    if (path === '/api/user/checkin' && data?.code === 1 && data?.message === 'Please Try Tomorrow') {
+      return { ...data, alreadyCheckedIn: true }
+    }
     if (data?.code !== 0) {
       // Do not log API payloads: they may contain account information.
       const code = typeof data?.code === 'number' ? data.code : 'missing'
+      if (data?.reason === 'device-mismatch') {
+        throw new Error(`${path}: 登录设备不匹配，请重新登录并更新 Cookie`)
+      }
       const message = String(data?.message ?? '')
-      const auth = /cookie|login|log in|登录|登陆|认证|身份|expired|未授权/i.test(message)
+      const auth = code === -2 || /cookie|login|log in|登录|登陆|认证|身份|expired|未授权|没有权限/i.test(message)
       throw new Error(`${path}: API code=${code}${auth ? '，登录凭证失效，请更新 GLADOS Secret 中的 Cookie' : '，签到未被服务确认'}`)
     }
     return data
@@ -55,12 +61,12 @@ export const glados = async (env = process.env, fetchImpl = fetch) => {
   for (const [index, cookie] of cookies.entries()) {
     const account = `帐号 ${index + 1}`
     try {
-      await request('/api/user/checkin', cookie, {
+      const action = await request('/api/user/checkin', cookie, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ token: 'glados.cloud' }),
       }, fetchImpl)
-      notice.push(`${account}: Checkin OK`)
+      notice.push(`${account}: ${action.alreadyCheckedIn ? '今日已签到' : 'Checkin OK'}`)
       try {
         const status = await request('/api/user/status', cookie, { method: 'GET' }, fetchImpl)
         const leftDays = Number(status?.data?.leftDays)
