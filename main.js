@@ -43,6 +43,9 @@ export const request = async (path, cookie, options = {}, fetchImpl = fetch) => 
     if (data?.code !== 0) {
       // Do not log API payloads: they may contain account information.
       const code = typeof data?.code === 'number' ? data.code : 'missing'
+      if (path === '/api/user/checkin' && data?.reason === 'turnstile') {
+        throw new Error(`${path}: API code=${code}，GLaDOS 要求通过浏览器人机验证，请打开 https://glados.cloud/console/checkin 手动签到`)
+      }
       if (data?.reason === 'device-mismatch') {
         throw new Error(`${path}: 登录设备不匹配，请将 glados.config.json 的 userAgent 配置为获取 Cookie 时浏览器的完整 User-Agent`)
       }

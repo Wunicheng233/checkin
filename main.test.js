@@ -94,3 +94,15 @@ test('unexpected code-one messages redact cookie values and account identifiers'
   assert.equal(result.failed, true)
   assert.doesNotMatch(result.notice.join(' '), /secret-cookie-value|person@example.com|123456/)
 })
+
+test('a browser verification requirement is reported once as a failed check-in', async () => {
+  let calls = 0
+  const result = await glados({ GLADOS: 'example' }, async () => {
+    calls++
+    return json({ code: 5, reason: 'turnstile', message: 'private payload' })
+  })
+  assert.equal(result.failed, true)
+  assert.equal(calls, 1)
+  assert.match(result.notice[0], /浏览器人机验证.*手动签到/)
+  assert.doesNotMatch(result.notice[0], /private payload/)
+})
